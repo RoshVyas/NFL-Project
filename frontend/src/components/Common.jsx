@@ -1,12 +1,13 @@
 import { ordinal, tier, VERDICTS } from "../format.js";
 
-export function RankPill({ rank, better, of = 32 }) {
+export function RankPill({ rank, better, of = 32, tiedWith = 0 }) {
   if (!rank) return null;
   const t = tier(rank, better);
-  const title = better ? `${ordinal(rank)} of ${of} (1 = best)` : `${ordinal(rank)} highest of ${of}`;
+  let title = better ? `${ordinal(rank)} of ${of} (1 = best)` : `${ordinal(rank)} highest of ${of}`;
+  if (tiedWith > 1) title = `Tied ${ordinal(rank)} with ${tiedWith - 1} other team${tiedWith > 2 ? "s" : ""}. ${title}`;
   return (
-    <span className={`pill ${t}`} title={title}>
-      {rank}
+    <span className={`pill ${t}${tiedWith > 1 ? " tied" : ""}`} title={title}>
+      {tiedWith > 1 ? `T${rank}` : rank}
     </span>
   );
 }

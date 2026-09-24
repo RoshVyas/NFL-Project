@@ -20,11 +20,34 @@ export default function Rankings({ seasons, highlight }) {
       .catch((e) => setError(e.message));
   }, [season, side]);
 
-  const rows = useMemo(() => {
+  // How many teams share each rank, per column, so ties can be labelled "T8".
+  const tieCounts = useMemo(() => {
+    const out = {};
+    for (const c of data?.columns ?? []) {
+      const counts = {};
+      for (const t of data.teams) {
+        const rk = t.values[c.key]?.rank;
+        if (rk) counts[rk] = (counts[rk] || 0) + 1;
+      }
+      out[c.key] = counts;
+    }
+    return out;
+  }, [data]);
+
+  // Sorted 1-32; tied teams are grouped and listed alphabetically, since their order means nothing.
+  const groups = useMemo(() => {
     if (!data?.teams) return [];
-    const r = [...data.teams];
-    if (sort.key === "team") return r.sort((a, b) => a.team.name.localeCompare(b.team.name));
-    return r.sort((a, b) => (a.values[sort.key]?.rank ?? 99) - (b.values[sort.key]?.rank ?? 99));
+    const byName = (a, b) => a.team.name.localeCompare(b.team.name);
+    if (sort.key === "team") return [...data.teams].sort(byName).map((t) => ({ rank: null, teams: [t] }));
+    const rankOf = (t) => t.values[sort.key]?.rank ?? 99;
+    const sorted = [...data.teams].sort((a, b) => rankOf(a) - rankOf(b) || byName(a, b));
+    const out = [];
+    for (const t of sorted) {
+      const last = out[out.length - 1];
+      if (last && last.rank === rankOf(t)) last.teams.push(t);
+      else out.push({ rank: rankOf(t), teams: [t] });
+    }
+    return out;
   }, [data, sort]);
 
   const sortCol = data?.columns.find((c) => c.key === sort.key);
@@ -87,27 +110,52 @@ export default function Rankings({ seasons, highlight }) {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((t, i) => (
-                  <tr key={t.team.abbr} className={highlight?.includes(t.team.abbr) ? "hl" : ""}>
-                    <td className="num muted">{sort.key === "team" ? "" : t.values[sort.key]?.rank ?? i + 1}</td>
-                    <td className="team-cell">
-                      <TeamLogo team={t.team} size={22} />
-                      <span>
-                        {t.team.name}
-                        <small className="muted"> {t.record}</small>
-                      </span>
-                    </td>
-                    {data.columns.map((c) => {
-                      const v = t.values[c.key];
-                      return (
-                        <td key={c.key} className={`num ${sort.key === c.key ? "sorted" : ""}`}>
-                          <span className="val">{fmt(v?.v, c.fmt)}</span>
-                          <RankPill rank={v?.rank} better={c.better} />
+                {groups.map((g, gi) =>
+                  g.teams.map((t, i) => {
+                    const tied = g.teams.length > 1;
+                    const classes = [
+                      highlight?.includes(t.team.abbr) ? "hl" : "",
+                      tied ? "tie" : "",
+                      tied && i === 0 ? "tie-first" : "",
+                      tied && i === g.teams.length - 1 ? "tie-last" : "",
+                      gi % 2 ? "band" : "",
+                    ].join(" ");
+                    return (
+                      <tr key={t.team.abbr} className={classes}>
+                        {i === 0 && (
+                          <td className="num rank-cell" rowSpan={g.teams.length}>
+                            {g.rank == null || g.rank === 99 ? (
+                              "–"
+                            ) : tied ? (
+                              <>
+                                <strong>T-{g.rank}</strong>
+                                <small>{g.teams.length} tied</small>
+                              </>
+                            ) : (
+                              <strong>{g.rank}</strong>
+                            )}
+                          </td>
+                        )}
+                        <td className="team-cell">
+                          <TeamLogo team={t.team} size={22} />
+                          <span>
+                            {t.team.name}
+                            <small className="muted"> {t.record}</small>
+                          </span>
                         </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                        {data.columns.map((c) => {
+                          const v = t.values[c.key];
+                          return (
+                            <td key={c.key} className={`num ${sort.key === c.key ? "sorted" : ""}`}>
+                              <span className="val">{fmt(v?.v, c.fmt)}</span>
+                              <RankPill rank={v?.rank} better={c.better} tiedWith={tieCounts[c.key]?.[v?.rank] || 0} />
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
@@ -115,7 +163,8 @@ export default function Rankings({ seasons, highlight }) {
       )}
       <p className="muted small">
         X, Z and slot use each team's receiver roles (see a team's Depth chart tab). TE is the "Y" in most playbooks.
-        RB columns include every running back. Teams in the game you have open are highlighted.
+        RB columns include every running back. Teams in the game you have open are highlighted. "T-8" means tied
+        for 8th: tied teams share a rank and are listed alphabetically.
       </p>
     </section>
   );

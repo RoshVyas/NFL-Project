@@ -1047,6 +1047,37 @@ td.label small {
   cursor: pointer;
   padding: 0;
 }
+.rank-table tr.band td {
+  background: var(--surface-2);
+}
+.rank-table tr.band td.sorted {
+  background: var(--mid-bg);
+}
+.rank-table td.rank-cell {
+  vertical-align: middle;
+  text-align: center;
+  width: 64px;
+  font-family: var(--display);
+  font-size: 18px;
+  border-right: 1px solid var(--line);
+}
+.rank-table td.rank-cell small {
+  display: block;
+  font-family: var(--body);
+  font-size: 10.5px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.rank-table tr.tie:not(.tie-last) td {
+  border-bottom-style: dashed;
+}
+.rank-table tr.tie td.team-cell {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.pill.tied {
+  outline: 1px dashed currentColor;
+  outline-offset: -1px;
+}
 .total-row td {
   border-top: 2px solid var(--line);
   font-weight: 700;
@@ -1097,4 +1128,8 @@ td.label small {
   .roles-grid {
     grid-template-columns: 1fr;
   }
+}
+.rank-table tr.hl td,
+.rank-table tr.hl.band td {
+  background: var(--info-bg);
 }
