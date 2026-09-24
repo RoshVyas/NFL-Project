@@ -93,7 +93,7 @@ export function RbTable({ rows, seasons, side, notes }) {
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.slot}>
+            <tr key={r.slot} className={r.slot === "ALLRB" ? "total-row" : ""}>
               <td className="label">
                 {r.label}
                 {off && r.players?.[latest]?.length > 0 && (

@@ -10,7 +10,7 @@ import pandas as pd
 
 from . import config, sources, teams
 from . import roles as roles_mod
-from .metrics import DEFENSE_SECTIONS, EDGE_DEFS, METRICS, OFFENSE_SECTIONS
+from .metrics import DEFENSE_SECTIONS, EDGE_DEFS, METRICS, OFFENSE_SECTIONS, RANKING_COLUMNS
 from .stats import RB_SLOTS, REC_ROLES, SeasonData, build_season, clean, latest_depth
 
 log = logging.getLogger(__name__)
@@ -350,8 +350,9 @@ def _rb_leaders(sd: SeasonData, team: str) -> dict[str, list[str]]:
 
 def _rb_table(side: str, team: str, sds: list[SeasonData]) -> list[dict]:
     out = []
-    for slot in RB_SLOTS:
-        row = {"slot": slot, "label": {"RB1": "RB1", "RB2": "RB2", "RB3": "RB3+"}[slot], "values": {}, "players": {}}
+    for slot in RB_SLOTS + ["ALLRB"]:
+        label = {"RB1": "RB1", "RB2": "RB2", "RB3": "RB3+", "ALLRB": "All RBs"}[slot]
+        row = {"slot": slot, "label": label, "values": {}, "players": {}}
         for sd in sds:
             if not sd.available:
                 continue
@@ -371,7 +372,7 @@ def _rb_table(side: str, team: str, sds: list[SeasonData]) -> list[dict]:
                 "td": clean(m.get(f"{slot}_td"), 0),
                 "td_rank": r.get(f"{slot}_td"),
             }
-            if side == "off":
+            if side == "off" and slot != "ALLRB":
                 names = dict(zip(sd.players["player_id"], sd.players["name"]))
                 tp = _team_players(sd, team).set_index("player_id")
                 row["players"][str(sd.season)] = [
@@ -618,6 +619,28 @@ def edges(off_team: str, def_team: str, sds: list[SeasonData], depth: pd.DataFra
 # ----------------------------------------------------------------------------
 # Entry point
 # ----------------------------------------------------------------------------
+
+def league_rankings(season: int, side: str) -> dict:
+    """Every team's value and 1-32 rank for the League rankings page."""
+    sd = get_season(season)
+    if not sd.available:
+        return {"season": season, "side": side, "available": False, "columns": [], "teams": []}
+    src = sd.off if side == "off" else sd.deff
+    ranks = sd.off_rank if side == "off" else sd.def_rank
+    columns = [{"key": k, "label": label, "desc": desc, "fmt": METRICS[k]["fmt"],
+                "better": METRICS[k][side]} for k, label, desc in RANKING_COLUMNS]
+    rows = []
+    for team in sorted(src):
+        rows.append({
+            "team": teams.info(team),
+            "games": sd.games.get(team, 0),
+            "record": sd.records.get(team),
+            "values": {c["key"]: {"v": clean(src[team].get(c["key"]), 0 if c["fmt"] == "n0" else 1),
+                                  "rank": ranks.get(team, {}).get(c["key"])} for c in columns},
+        })
+    return json_safe({"season": season, "side": side, "available": True, "last_week": sd.last_week,
+                      "columns": columns, "teams": rows})
+
 
 def json_safe(obj):
     """Replace NaN/inf (which JSON can't encode) with None, recursively."""

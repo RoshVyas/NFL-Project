@@ -98,7 +98,7 @@ function Offense({ report, seasons, notes }) {
       </Card>
 
       <Card
-        title="Running backs: RB1, RB2, RB3"
+        title="Running backs: RB1, RB2, RB3, all"
         desc="Rushing plus receiving. Each game, the back with the most touches counts as RB1, the next as RB2. Names show who filled each spot most often."
       >
         <RbTable rows={o.rb_depth} seasons={seasons} side="off" notes={notes} />
@@ -151,7 +151,7 @@ function Defense({ report, seasons, notes }) {
       </Card>
 
       <Card
-        title="Running backs allowed: RB1, RB2, RB3"
+        title="Running backs allowed: RB1, RB2, RB3, all"
         desc="Rushing plus receiving by the opponent's lead back (RB1), backup (RB2) and anyone else. TDs include both. Rank: 32 gives up the most."
       >
         <RbTable rows={d.rb_depth} seasons={seasons} side="def" notes={notes} />

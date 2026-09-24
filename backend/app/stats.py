@@ -215,9 +215,9 @@ def unit_metrics(d: pd.DataFrame, games: int) -> dict:
         m[f"rec_yds_pg_{role}"] = div(x["rec_yds"].sum(), g)
         m[f"rec_td_{role}"] = float(x["pass_td"].sum())
         m[f"ypt_{role}"] = div(x["rec_yds"].sum(), len(x))
-    for slot in RB_SLOTS:
-        ru = runs[runs["rb_slot"] == slot]
-        rc = tg[tg["rb_slot"] == slot]
+    for slot in RB_SLOTS + ["ALLRB"]:
+        ru = runs[runs["rb_slot"].notna()] if slot == "ALLRB" else runs[runs["rb_slot"] == slot]
+        rc = tg[tg["rb_slot"].notna()] if slot == "ALLRB" else tg[tg["rb_slot"] == slot]
         rush_yds, rec_yds = ru["rush_yds"].sum(), rc["rec_yds"].sum()
         m[f"{slot}_carries_pg"] = div(len(ru), g)
         m[f"{slot}_rush_yds_pg"] = div(rush_yds, g)

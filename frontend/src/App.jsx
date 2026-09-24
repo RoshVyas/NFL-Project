@@ -4,6 +4,7 @@ import TopBar from "./components/TopBar.jsx";
 import MatchupHeader from "./components/MatchupHeader.jsx";
 import EdgeBoard from "./components/EdgeBoard.jsx";
 import TeamHalf from "./components/TeamHalf.jsx";
+import Rankings from "./components/Rankings.jsx";
 
 const VIEW_KEY = "matchup-board:view";
 
@@ -25,6 +26,7 @@ export default function App() {
   const [error, setError] = useState(null);
   const [tabs, setTabs] = useState({ away: "offense", home: "defense" });
   const [reloadKey, setReloadKey] = useState(0);
+  const [page, setPage] = useState("matchup");
 
   useEffect(() => {
     api
@@ -99,6 +101,15 @@ export default function App() {
 
   return (
     <div className="app">
+      <nav className="page-nav" aria-label="Pages">
+        <button aria-current={page === "matchup" ? "page" : undefined} onClick={() => setPage("matchup")}>
+          Matchup
+        </button>
+        <button aria-current={page === "rankings" ? "page" : undefined} onClick={() => setPage("rankings")}>
+          League rankings
+        </button>
+      </nav>
+
       <TopBar
         games={games}
         teams={teams}
@@ -126,7 +137,11 @@ export default function App() {
         </div>
       )}
 
-      {data && (
+      {page === "rankings" && data && (
+        <Rankings seasons={data.seasons.map(String)} highlight={[data.away.team.abbr, data.home.team.abbr]} />
+      )}
+
+      {page === "matchup" && data && (
         <main className={loading ? "is-loading" : ""}>
           <MatchupHeader data={data} />
           <SeasonNotes notes={data.season_notes} />

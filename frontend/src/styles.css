@@ -981,6 +981,77 @@ td.label small {
   gap: 6px;
 }
 
+/* page nav */
+.page-nav {
+  display: flex;
+  gap: 4px;
+  padding-top: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.page-nav button {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 6px 12px;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+}
+.page-nav button[aria-current="page"] {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
+/* rankings */
+.rankings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.rank-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.rank-table td,
+.rank-table th {
+  padding: 6px 8px;
+}
+.rank-table .team-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.rank-table th.sorted,
+.rank-table td.sorted {
+  background: var(--surface-2);
+}
+.rank-table tr.hl td {
+  background: var(--info-bg);
+}
+.th-btn {
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+.total-row td {
+  border-top: 2px solid var(--line);
+  font-weight: 700;
+}
+
 .footer {
   color: var(--muted);
   font-size: 12.5px;

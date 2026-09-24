@@ -102,14 +102,16 @@ for _role, _label in [("X", "X receiver"), ("Z", "Z receiver"), ("SLOT", "Slot r
     METRICS[f"ypt_{_role}"] = _m(f"{_label} yards / target", "n1", HI, LO)
 
 
-for _slot in ("RB1", "RB2", "RB3"):
-    METRICS[f"{_slot}_yds_pg"] = _m(f"{_slot} scrimmage yards / game", "n1", HI, LO)
-    METRICS[f"{_slot}_rush_yds_pg"] = _m(f"{_slot} rush yards / game", "n1", HI, LO)
-    METRICS[f"{_slot}_rec_yds_pg"] = _m(f"{_slot} receiving yards / game", "n1", HI, LO)
-    METRICS[f"{_slot}_td"] = _m(f"{_slot} TDs", "n0", HI, LO)
-    METRICS[f"{_slot}_carries_pg"] = _m(f"{_slot} carries / game", "n1", N, N)
-    METRICS[f"{_slot}_tgt_pg"] = _m(f"{_slot} targets / game", "n1", N, N)
-    METRICS[f"{_slot}_ypc"] = _m(f"{_slot} yards / carry", "n1", HI, LO)
+for _slot, _name in (("RB1", "RB1"), ("RB2", "RB2"), ("RB3", "RB3"), ("ALLRB", "All RBs")):
+    METRICS[f"{_slot}_yds_pg"] = _m(f"{_name} scrimmage yards / game", "n1", HI, LO)
+    METRICS[f"{_slot}_rush_yds_pg"] = _m(f"{_name} rush yards / game", "n1", HI, LO)
+    METRICS[f"{_slot}_rec_yds_pg"] = _m(f"{_name} receiving yards / game", "n1", HI, LO)
+    METRICS[f"{_slot}_td"] = _m(f"{_name} TDs", "n0", HI, LO)
+    METRICS[f"{_slot}_carries_pg"] = _m(f"{_name} carries / game", "n1", N, N)
+    METRICS[f"{_slot}_tgt_pg"] = _m(f"{_name} targets / game", "n1", N, N)
+    METRICS[f"{_slot}_ypc"] = _m(f"{_name} yards / carry", "n1", HI, LO)
+    METRICS[f"{_slot}_rush_td"] = _m(f"{_name} rush TDs", "n0", HI, LO)
+    METRICS[f"{_slot}_rec_td"] = _m(f"{_name} receiving TDs", "n0", HI, LO)
 
 
 OFFENSE_SECTIONS = [
@@ -163,4 +165,22 @@ EDGE_DEFS = [
     {"key": "run_eff", "label": "Rushing efficiency", "metric": "epa_rush"},
     {"key": "third", "label": "3rd downs", "metric": "third_down_pct"},
     {"key": "protection", "label": "Pass protection vs pass rush", "metric": "sack_rate"},
+]
+
+
+# Columns on the League rankings page, in order. (key, short header, what it measures)
+RANKING_COLUMNS = [
+    ("ALLRB_rush_yds_pg", "RB rush", "Rushing yards per game by all running backs"),
+    ("ALLRB_yds_pg", "RB total", "Rushing + receiving yards per game by all running backs"),
+    ("ALLRB_td", "RB TDs", "Rushing + receiving TDs by running backs, season total"),
+    ("pass_yds_pg", "QB pass", "Passing yards per game"),
+    ("qb_rush_yds_pg", "QB rush", "QB rushing yards per game (designed runs + scrambles)"),
+    ("rec_yds_pg_ALLWR", "All WRs", "Receiving yards per game by all wide receivers"),
+    ("rec_yds_pg_X", "X", "Receiving yards per game by the X receiver"),
+    ("rec_yds_pg_Z", "Z", "Receiving yards per game by the Z receiver"),
+    ("rec_yds_pg_SLOT", "Slot", "Receiving yards per game by the slot receiver"),
+    ("rec_yds_pg_TE", "TE (Y)", "Receiving yards per game by tight ends"),
+    ("rec_yds_pg_RB", "RB rec", "Receiving yards per game by running backs"),
+    ("deep_yds_pg", "Deep", "Yards per game on throws of 20+ air yards"),
+    ("points_pg", "Points", "Points per game"),
 ]

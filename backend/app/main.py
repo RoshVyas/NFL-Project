@@ -69,6 +69,18 @@ def matchup_by_teams(away: str, home: str):
         raise HTTPException(503, str(exc))
 
 
+@app.get("/api/rankings")
+def rankings(season: Optional[int] = None, side: str = Query("def", pattern="^(off|def)$")):
+    prior, cur = config.seasons()
+    season = season or cur
+    if season not in (prior, cur):
+        raise HTTPException(400, f"Season must be {prior} or {cur}")
+    try:
+        return report.league_rankings(season, side)
+    except sources.DataUnavailable as exc:
+        raise HTTPException(503, str(exc))
+
+
 class RoleUpdate(BaseModel):
     season: int
     X: Optional[str] = None
