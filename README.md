@@ -136,6 +136,20 @@ backend/.venv/bin/uvicorn app.main:app --app-dir backend --port 8000
 
 Then open http://localhost:8000. FastAPI serves the built site and the API together.
 
+## Hosting it online (Render)
+
+The repo includes a `Dockerfile` (builds the site and the API into one container) and a `render.yaml` blueprint.
+
+1. Sign up at [render.com](https://render.com) with your GitHub account.
+2. In the dashboard choose **New → Blueprint**, pick the `NFL-Project` repo and the branch to deploy, then
+   **Apply**.
+3. Wait for the first build (about 5 minutes). Render gives you a permanent address like
+   `https://nfl-matchup-board.onrender.com`.
+
+Every push to that branch redeploys automatically. On the free plan the app sleeps after 15 minutes without
+visitors. The next visit wakes it and re-downloads the data, which takes about a minute. The $7/month plan stays
+awake. Receiver roles you edit on the hosted site reset whenever it restarts or redeploys.
+
 ## Troubleshooting
 
 - **"Couldn't load the data"**: make sure the backend is running (`./dev.sh` starts it) and you're online for the

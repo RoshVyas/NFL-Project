@@ -14,6 +14,7 @@ import time
 from pathlib import Path
 
 import pandas as pd
+import pyarrow.parquet as pq
 import requests
 
 from . import config
@@ -42,6 +43,12 @@ PBP_COLUMNS = [
 
 class DataUnavailable(Exception):
     pass
+
+
+def _read(path: Path, columns: list[str]) -> pd.DataFrame:
+    """Read only the columns we use; keeps memory low enough for small servers."""
+    available = set(pq.read_schema(path).names)
+    return pd.read_parquet(path, columns=[c for c in columns if c in available])
 
 
 def _fetch(url: str, dest: Path, ttl_hours: float) -> Path | None:
@@ -113,9 +120,7 @@ def pbp(season: int) -> pd.DataFrame | None:
     path = _release("pbp", f"play_by_play_{season}.parquet", _ttl(season))
     if path is None:
         return None
-    df = pd.read_parquet(path)
-    cols = [c for c in PBP_COLUMNS if c in df.columns]
-    return df[cols].copy()
+    return _read(path, PBP_COLUMNS)
 
 
 def participation(season: int) -> pd.DataFrame | None:
@@ -125,8 +130,7 @@ def participation(season: int) -> pd.DataFrame | None:
         return None
     cols = ["nflverse_game_id", "play_id", "defense_man_zone_type", "defense_coverage_type",
             "was_pressure", "number_of_pass_rushers", "time_to_throw"]
-    df = pd.read_parquet(path)
-    return df[[c for c in cols if c in df.columns]].copy()
+    return _read(path, cols)
 
 
 def ftn(season: int) -> pd.DataFrame | None:
@@ -136,8 +140,7 @@ def ftn(season: int) -> pd.DataFrame | None:
         return None
     cols = ["nflverse_game_id", "nflverse_play_id", "is_play_action", "is_screen_pass", "is_motion",
             "is_rpo", "n_blitzers", "n_pass_rushers", "n_defense_box", "is_drop"]
-    df = pd.read_parquet(path)
-    return df[[c for c in cols if c in df.columns]].copy()
+    return _read(path, cols)
 
 
 def depth_charts(season: int) -> pd.DataFrame | None:
@@ -146,7 +149,10 @@ def depth_charts(season: int) -> pd.DataFrame | None:
     path = _release("depth_charts", f"depth_charts_{season}.parquet", ttl)
     if path is None:
         return None
-    return pd.read_parquet(path)
+    df = _read(path, ["dt", "team", "player_name", "gsis_id", "pos_grp", "pos_name", "pos_abb", "pos_slot",
+                      "pos_rank"])
+    # Only the latest snapshot per team is used; drop the daily history right away.
+    return df[df["dt"] == df.groupby("team")["dt"].transform("max")].reset_index(drop=True)
 
 
 def players() -> pd.DataFrame:
@@ -154,8 +160,7 @@ def players() -> pd.DataFrame:
     if path is None:
         raise DataUnavailable("Could not download the nflverse players file.")
     cols = ["gsis_id", "display_name", "short_name", "position", "jersey_number", "headshot", "latest_team"]
-    df = pd.read_parquet(path)
-    return df[[c for c in cols if c in df.columns]].dropna(subset=["gsis_id"]).copy()
+    return _read(path, cols).dropna(subset=["gsis_id"])
 
 
 def schedule() -> pd.DataFrame:

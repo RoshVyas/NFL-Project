@@ -1,0 +1,8 @@
+# Render Blueprint: New > Blueprint in the Render dashboard, pick this repo, and it sets everything up.
+services:
+  - type: web
+    name: nfl-matchup-board
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true
