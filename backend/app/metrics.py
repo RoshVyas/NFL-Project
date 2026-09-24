@@ -93,13 +93,23 @@ METRICS: dict[str, dict] = {
 }
 
 for _role, _label in [("X", "X receiver"), ("Z", "Z receiver"), ("SLOT", "Slot receiver"),
-                      ("WR", "Other WRs"), ("TE", "Tight ends"), ("RB", "Running backs")]:
+                      ("WR", "Other WRs"), ("TE", "Tight ends"), ("RB", "RB receiving")]:
     METRICS[f"tgt_pg_{_role}"] = _m(f"{_label} targets / game", "n1", N, N)
     METRICS[f"tgt_share_{_role}"] = _m(f"{_label} target share", "pct", N, N)
     METRICS[f"rec_pg_{_role}"] = _m(f"{_label} catches / game", "n1", HI, LO)
     METRICS[f"rec_yds_pg_{_role}"] = _m(f"{_label} yards / game", "n1", HI, LO)
     METRICS[f"rec_td_{_role}"] = _m(f"{_label} TDs", "n0", HI, LO)
     METRICS[f"ypt_{_role}"] = _m(f"{_label} yards / target", "n1", HI, LO)
+
+
+for _slot in ("RB1", "RB2", "RB3"):
+    METRICS[f"{_slot}_yds_pg"] = _m(f"{_slot} scrimmage yards / game", "n1", HI, LO)
+    METRICS[f"{_slot}_rush_yds_pg"] = _m(f"{_slot} rush yards / game", "n1", HI, LO)
+    METRICS[f"{_slot}_rec_yds_pg"] = _m(f"{_slot} receiving yards / game", "n1", HI, LO)
+    METRICS[f"{_slot}_td"] = _m(f"{_slot} TDs", "n0", HI, LO)
+    METRICS[f"{_slot}_carries_pg"] = _m(f"{_slot} carries / game", "n1", N, N)
+    METRICS[f"{_slot}_tgt_pg"] = _m(f"{_slot} targets / game", "n1", N, N)
+    METRICS[f"{_slot}_ypc"] = _m(f"{_slot} yards / carry", "n1", HI, LO)
 
 
 OFFENSE_SECTIONS = [
@@ -141,6 +151,8 @@ EDGE_DEFS = [
     {"key": "Z", "label": "Z receiver", "metric": "rec_yds_pg_Z", "player_role": "Z"},
     {"key": "SLOT", "label": "Slot receiver", "metric": "rec_yds_pg_SLOT", "player_role": "SLOT"},
     {"key": "TE", "label": "Tight end", "metric": "rec_yds_pg_TE", "player_role": "TE1"},
+    {"key": "RB1", "label": "RB1 (lead back)", "metric": "RB1_yds_pg", "player_role": "RB1"},
+    {"key": "RB2", "label": "RB2", "metric": "RB2_yds_pg", "player_role": "RB2"},
     {"key": "RB_rec", "label": "RB receiving", "metric": "rec_yds_pg_RB", "player_role": "RB1"},
     {"key": "RB_rush", "label": "RB rushing", "metric": "rb_rush_yds_pg", "player_role": "RB1"},
     {"key": "QB_rush", "label": "QB rushing", "metric": "qb_rush_yds_pg", "player_role": "QB1"},

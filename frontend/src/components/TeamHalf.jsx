@@ -1,6 +1,6 @@
 import { Card, Chips, seasonHeading } from "./Common.jsx";
 import StatTable from "./StatTable.jsx";
-import RoleTable from "./RoleTable.jsx";
+import RoleTable, { RbTable } from "./RoleTable.jsx";
 import { CoverageBars, RunDirection, TdPodium } from "./Visuals.jsx";
 import { KeyPlayers, LeaderTable } from "./Players.jsx";
 import DepthChart from "./DepthChart.jsx";
@@ -97,6 +97,13 @@ function Offense({ report, seasons, notes }) {
         <RoleTable roles={o.roles} seasons={seasons} side="off" notes={notes} />
       </Card>
 
+      <Card
+        title="Running backs: RB1, RB2, RB3"
+        desc="Rushing plus receiving. Each game, the back with the most touches counts as RB1, the next as RB2. Names show who filled each spot most often."
+      >
+        <RbTable rows={o.rb_depth} seasons={seasons} side="off" notes={notes} />
+      </Card>
+
       <Card title="Who scores the touchdowns" desc="Top 3 positions by touchdowns, then the players.">
         <TdPodium td={o.td} seasons={seasons} side="off" notes={notes} />
         <LeaderTable leaders={o.leaders} kind="td" seasons={seasons} limit={5} notes={notes} />
@@ -137,10 +144,17 @@ function Defense({ report, seasons, notes }) {
       </StatCard>
 
       <Card
-        title="Yards allowed by receiver spot"
-        desc="Rank is yards allowed per game: 1 gives up the least, 32 the most."
+        title="Receiving yards allowed by receiver spot"
+        desc="Passes caught only (RB rushing is in the running backs table below). Rank: 1 gives up the least, 32 the most."
       >
         <RoleTable roles={d.roles} seasons={seasons} side="def" notes={notes} />
+      </Card>
+
+      <Card
+        title="Running backs allowed: RB1, RB2, RB3"
+        desc="Rushing plus receiving by the opponent's lead back (RB1), backup (RB2) and anyone else. TDs include both. Rank: 32 gives up the most."
+      >
+        <RbTable rows={d.rb_depth} seasons={seasons} side="def" notes={notes} />
       </Card>
 
       <Card title="Touchdowns allowed" desc="The top 3 positions that score against them.">

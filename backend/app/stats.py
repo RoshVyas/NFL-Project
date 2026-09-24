@@ -21,6 +21,7 @@ from .metrics import METRICS
 log = logging.getLogger(__name__)
 
 REC_ROLES = ["X", "Z", "SLOT", "WR", "TE", "RB"]
+RB_SLOTS = ["RB1", "RB2", "RB3"]
 RUN_BUCKETS = [
     ("LE", "Left end"), ("LT", "Left tackle"), ("LG", "Left guard"), ("M", "Middle"),
     ("RG", "Right guard"), ("RT", "Right tackle"), ("RE", "Right end"),
@@ -214,6 +215,19 @@ def unit_metrics(d: pd.DataFrame, games: int) -> dict:
         m[f"rec_yds_pg_{role}"] = div(x["rec_yds"].sum(), g)
         m[f"rec_td_{role}"] = float(x["pass_td"].sum())
         m[f"ypt_{role}"] = div(x["rec_yds"].sum(), len(x))
+    for slot in RB_SLOTS:
+        ru = runs[runs["rb_slot"] == slot]
+        rc = tg[tg["rb_slot"] == slot]
+        rush_yds, rec_yds = ru["rush_yds"].sum(), rc["rec_yds"].sum()
+        m[f"{slot}_carries_pg"] = div(len(ru), g)
+        m[f"{slot}_rush_yds_pg"] = div(rush_yds, g)
+        m[f"{slot}_ypc"] = div(rush_yds, len(ru))
+        m[f"{slot}_tgt_pg"] = div(len(rc), g)
+        m[f"{slot}_rec_yds_pg"] = div(rec_yds, g)
+        m[f"{slot}_yds_pg"] = div(rush_yds + rec_yds, g)
+        m[f"{slot}_rush_td"] = float(ru["rush_td"].sum())
+        m[f"{slot}_rec_td"] = float(rc["pass_td"].sum())
+        m[f"{slot}_td"] = float(ru["rush_td"].sum() + rc["pass_td"].sum())
     wr_all = tg[tg["rec_role"].isin(["X", "Z", "SLOT", "WR"])]
     m["rec_yds_pg_ALLWR"] = div(wr_all["rec_yds"].sum(), g)
     m["tgt_share_ALLWR"] = pct(len(wr_all), len(tg))
@@ -246,6 +260,28 @@ def unit_metrics(d: pd.DataFrame, games: int) -> dict:
         if len(pres):
             m["pressure_rate"] = pct(pres["was_pressure"].astype(bool).sum(), len(pres))
     return m
+
+
+def rb_slots(p: pd.DataFrame) -> pd.Series:
+    """RB1/RB2/RB3 for each RB carry or target, ranked by touches within that game.
+
+    Whoever got the most touches (carries + targets) for a team in a game is that
+    game's RB1, the next is RB2, and everyone after is grouped as RB3.
+    """
+    rush = p[p["carry"] & (p["rush_role"] == "RB")][["game_id", "posteam", "rusher_player_id", "rush_yds"]]
+    rush.columns = ["game_id", "posteam", "pid", "yds"]
+    rec = p[p["target"] & (p["rec_role"] == "RB")][["game_id", "posteam", "receiver_player_id", "rec_yds"]]
+    rec.columns = ["game_id", "posteam", "pid", "yds"]
+    touches = pd.concat([rush, rec]).groupby(["game_id", "posteam", "pid"]).agg(n=("yds", "size"), yds=("yds", "sum"))
+    touches = touches.reset_index().sort_values(["n", "yds"], ascending=False)
+    touches["rank"] = touches.groupby(["game_id", "posteam"]).cumcount() + 1
+    touches["slot"] = touches["rank"].clip(upper=3).map(lambda r: f"RB{r}")
+    lookup = dict(zip(zip(touches["game_id"], touches["posteam"], touches["pid"]), touches["slot"]))
+
+    pid = p["rusher_player_id"].where(p["carry"] & (p["rush_role"] == "RB"),
+                                      p["receiver_player_id"].where(p["target"] & (p["rec_role"] == "RB")))
+    keys = zip(p["game_id"], p["posteam"], pid)
+    return pd.Series([lookup.get(k) if isinstance(k[2], str) else None for k in keys], index=p.index, dtype="object")
 
 
 def td_breakdown(d: pd.DataFrame) -> list[dict]:
@@ -316,6 +352,14 @@ def player_table(p: pd.DataFrame, positions: dict, names: dict) -> pd.DataFrame:
     team_tgts = df.groupby("team")["targets"].transform("sum")
     df["tgt_share"] = np.where(team_tgts > 0, 100 * df["targets"] / team_tgts, 0)
     df["total_td"] = df["rec_td"] + df["rush_td"]
+    rb = p[p["rb_slot"].notna()]
+    rb_pid = rb["rusher_player_id"].where(rb["carry"], rb["receiver_player_id"])
+    rb_games = (pd.DataFrame({"team": rb["posteam"], "player_id": rb_pid, "game_id": rb["game_id"],
+                              "slot": rb["rb_slot"]}).drop_duplicates(["team", "player_id", "game_id"]))
+    for slot in RB_SLOTS:
+        counts = rb_games[rb_games["slot"] == slot].groupby(["team", "player_id"]).size().rename(f"games_{slot}")
+        df = df.merge(counts, on=["team", "player_id"], how="left")
+        df[f"games_{slot}"] = df[f"games_{slot}"].fillna(0)
     return df
 
 
@@ -394,6 +438,7 @@ def build_season(season: int, current: bool, prior_targets: pd.DataFrame | None 
 
     p["rec_role"] = roles_mod.tag_receiver_roles(p, team_roles, positions)
     p["rush_role"] = roles_mod.tag_rusher_roles(p, positions)
+    p["rb_slot"] = rb_slots(p)
 
     sched = sources.schedule()
     records, pf, pa = team_records(sched, season)

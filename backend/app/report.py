@@ -11,7 +11,7 @@ import pandas as pd
 from . import config, sources, teams
 from . import roles as roles_mod
 from .metrics import DEFENSE_SECTIONS, EDGE_DEFS, METRICS, OFFENSE_SECTIONS
-from .stats import REC_ROLES, SeasonData, build_season, clean, latest_depth
+from .stats import RB_SLOTS, REC_ROLES, SeasonData, build_season, clean, latest_depth
 
 log = logging.getLogger(__name__)
 
@@ -245,6 +245,12 @@ def resolve_player(role: str, sd_cur: SeasonData, team: str, lineup: dict) -> st
         return tr.starters.get(role) if tr else None
     if role == "DEEP":
         return tr.deep_threat if tr else None
+    if role in ("RB1", "RB2") and sd_cur.available:
+        leaders = _rb_leaders(sd_cur, team)
+        picks = [ids[0] for ids in (leaders["RB1"], leaders["RB2"]) if ids]
+        idx = int(role[-1]) - 1
+        if len(picks) > idx:
+            return picks[idx]
     pos, idx = role[:-1], int(role[-1]) - 1
     ids = lineup.get(pos, [])
     return ids[idx] if len(ids) > idx else None
@@ -319,6 +325,58 @@ def _role_table(side: str, team: str, sds: list[SeasonData]) -> list[dict]:
                 row["players"][str(sd.season)] = [
                     {"id": r.player_id, "name": r.name, "targets": int(r.targets), "yds": int(r.rec_yds),
                      "td": int(r.rec_td)} for r in tp.head(3).itertuples()]
+        out.append(row)
+    return out
+
+
+def _rb_leaders(sd: SeasonData, team: str) -> dict[str, list[str]]:
+    """Players who most often filled each RB slot for a team, e.g. {"RB1": [id, ...]}."""
+    tp = _team_players(sd, team)
+    out = {}
+    taken: set[str] = set()
+    for slot in RB_SLOTS:
+        col = f"games_{slot}"
+        if tp.empty or col not in tp:
+            out[slot] = []
+            continue
+        cand = tp[(tp[col] > 0) & ~tp["player_id"].isin(taken)]
+        cand = cand.assign(_touch=cand["carries"] + cand["targets"]).sort_values([col, "_touch"], ascending=False)
+        ids = cand["player_id"].tolist()
+        out[slot] = ids
+        if ids:
+            taken.add(ids[0])
+    return out
+
+
+def _rb_table(side: str, team: str, sds: list[SeasonData]) -> list[dict]:
+    out = []
+    for slot in RB_SLOTS:
+        row = {"slot": slot, "label": {"RB1": "RB1", "RB2": "RB2", "RB3": "RB3+"}[slot], "values": {}, "players": {}}
+        for sd in sds:
+            if not sd.available:
+                continue
+            src = sd.off if side == "off" else sd.deff
+            ranks = sd.off_rank if side == "off" else sd.def_rank
+            m, r = src.get(team, {}), ranks.get(team, {})
+            row["values"][str(sd.season)] = {
+                "carries_pg": clean(m.get(f"{slot}_carries_pg")),
+                "rush_yds_pg": clean(m.get(f"{slot}_rush_yds_pg")),
+                "ypc": clean(m.get(f"{slot}_ypc")),
+                "tgt_pg": clean(m.get(f"{slot}_tgt_pg")),
+                "rec_yds_pg": clean(m.get(f"{slot}_rec_yds_pg")),
+                "yds_pg": clean(m.get(f"{slot}_yds_pg")),
+                "rank": r.get(f"{slot}_yds_pg"),
+                "rush_td": clean(m.get(f"{slot}_rush_td"), 0),
+                "rec_td": clean(m.get(f"{slot}_rec_td"), 0),
+                "td": clean(m.get(f"{slot}_td"), 0),
+                "td_rank": r.get(f"{slot}_td"),
+            }
+            if side == "off":
+                names = dict(zip(sd.players["player_id"], sd.players["name"]))
+                tp = _team_players(sd, team).set_index("player_id")
+                row["players"][str(sd.season)] = [
+                    {"id": pid, "name": names.get(pid, pid), "games": int(tp.loc[pid, f"games_{slot}"])}
+                    for pid in _rb_leaders(sd, team)[slot][:2]]
         out.append(row)
     return out
 
@@ -469,6 +527,7 @@ def team_report(team: str, sds: list[SeasonData], depth: pd.DataFrame | None) ->
         "offense": {
             "sections": [_section_rows(s, "off", team, sds) for s in OFFENSE_SECTIONS],
             "roles": _role_table("off", team, sds),
+            "rb_depth": _rb_table("off", team, sds),
             "td": {s: sd.td_off.get(team, []) for s, sd in by_season.items() if sd.available},
             "run_dir": {s: sd.run_dir_off.get(team, []) for s, sd in by_season.items() if sd.available},
             "leaders": {s: _leaders(sd, team) for s, sd in by_season.items() if sd.available},
@@ -478,6 +537,7 @@ def team_report(team: str, sds: list[SeasonData], depth: pd.DataFrame | None) ->
         "defense": {
             "sections": [_section_rows(s, "def", team, sds) for s in DEFENSE_SECTIONS],
             "roles": _role_table("def", team, sds),
+            "rb_depth": _rb_table("def", team, sds),
             "td": {s: sd.td_def.get(team, []) for s, sd in by_season.items() if sd.available},
             "run_dir": {s: sd.run_dir_def.get(team, []) for s, sd in by_season.items() if sd.available},
             "shells": {s: sd.shells.get(team) for s, sd in by_season.items() if sd.available},

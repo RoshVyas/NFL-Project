@@ -42,10 +42,12 @@ def plays():
              rusher_player_id="QB1", rushing_yards=-1, passing_yards=None, receiving_yards=None),
     ]
     p = stats.prepare_plays(pd.DataFrame(rows), None, None)
-    positions = {"WR1": "WR", "WR2": "WR", "SL1": "WR", "TE1": "TE", "RB1": "RB", "QB1": "QB"}
+    positions = {"WR1": "WR", "WR2": "WR", "SL1": "WR", "TE1": "TE", "RB1": "RB", "RB2": "RB", "RB3": "RB",
+                 "QB1": "QB"}
     team_roles = {"ATL": roles.TeamRoles(starters={"X": "WR1", "SLOT": "SL1"})}
     p["rec_role"] = roles.tag_receiver_roles(p, team_roles, positions)
     p["rush_role"] = roles.tag_rusher_roles(p, positions)
+    p["rb_slot"] = stats.rb_slots(p)
     return p
 
 
@@ -68,6 +70,19 @@ def test_unit_metrics(plays):
     assert m["rb_rush_yds_pg"] == 18
     assert m["exp_pass_pg"] == 1
     assert m["exp_run_pg"] == 1
+
+
+def test_rb_slots_ranked_by_touches_per_game(plays):
+    extra = pd.DataFrame([
+        {**plays.iloc[3].to_dict(), "play_id": 90 + i, "rusher_player_id": pid, "carry": True,
+         "designed_run": True, "rush_yds": 3.0}
+        for i, pid in enumerate(["RB2", "RB2", "RB2", "RB3"])
+    ])
+    p = pd.concat([plays, extra], ignore_index=True)
+    p["rb_slot"] = stats.rb_slots(p)
+    by_player = p[p["carry"]].groupby("rusher_player_id")["rb_slot"].first().to_dict()
+    # RB2 had 3 carries, RB1 had 2, RB3 had 1 -> ranked by touches in that game
+    assert by_player == {"RB2": "RB1", "RB1": "RB2", "RB3": "RB3"}
 
 
 def test_td_breakdown(plays):

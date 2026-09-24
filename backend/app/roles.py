@@ -31,7 +31,7 @@ ROLE_LABELS = {
     "SLOT": "Slot receiver",
     "WR": "Other WRs",
     "TE": "Tight ends",
-    "RB": "Running backs",
+    "RB": "RB receiving",
     "QB": "Quarterback",
     "OTHER": "Other",
 }
