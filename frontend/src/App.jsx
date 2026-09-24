@@ -138,7 +138,7 @@ export default function App() {
       )}
 
       {page === "rankings" && data && (
-        <Rankings seasons={data.seasons.map(String)} highlight={[data.away.team.abbr, data.home.team.abbr]} />
+        <Rankings seasons={data.seasons.map(String)} />
       )}
 
       {page === "matchup" && data && (

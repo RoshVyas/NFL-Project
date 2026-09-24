@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../api.js";
 import { fmt } from "../format.js";
 
-export default function Rankings({ seasons, highlight }) {
+export default function Rankings({ seasons }) {
   const [season, setSeason] = useState(seasons[seasons.length - 1]);
   const [side, setSide] = useState("def");
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
-  const [focus, setFocus] = useState(highlight ?? []);
+  const [focus, setFocus] = useState([]);
 
   useEffect(() => {
     if (!season) return;
@@ -112,7 +112,7 @@ export default function Rankings({ seasons, highlight }) {
       )}
       <p className="muted small">
         X, Z and slot use each team's receiver roles (see a team's Depth chart tab). TE is the "Y" in most playbooks.
-        RB columns include every running back. The two teams in the game you have open start out picked.
+        RB columns include every running back.
       </p>
     </section>
   );
