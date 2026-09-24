@@ -182,5 +182,4 @@ RANKING_COLUMNS = [
     ("rec_yds_pg_TE", "TE (Y)", "Receiving yards per game by tight ends"),
     ("rec_yds_pg_RB", "RB rec", "Receiving yards per game by running backs"),
     ("deep_yds_pg", "Deep", "Yards per game on throws of 20+ air yards"),
-    ("points_pg", "Points", "Points per game"),
 ]

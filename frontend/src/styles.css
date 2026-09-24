@@ -1019,64 +1019,57 @@ td.label small {
   gap: 12px;
   align-items: center;
 }
-.rank-table td,
-.rank-table th {
-  padding: 6px 8px;
+.rank-board {
+  border-collapse: collapse;
+  width: 100%;
 }
-.rank-table .team-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.rank-board th {
+  text-align: left;
+  padding: 8px 6px;
   white-space: nowrap;
-  font-weight: 600;
 }
-.rank-table th.sorted,
-.rank-table td.sorted {
-  background: var(--surface-2);
+.rank-board td {
+  padding: 0;
+  border-bottom: 1px solid var(--line);
+  border-left: 1px solid var(--line);
 }
-.rank-table tr.hl td {
-  background: var(--info-bg);
+.rank-board td:first-child,
+.rank-board th:first-child {
+  border-left: 0;
 }
-.th-btn {
+.rb-cell {
+  display: grid;
+  grid-template-columns: 24px 34px minmax(max-content, 1fr);
+  align-items: baseline;
+  gap: 4px;
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 13px;
   border: 0;
   background: none;
+  color: var(--ink);
   font: inherit;
-  color: inherit;
-  text-transform: inherit;
-  letter-spacing: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
   cursor: pointer;
-  padding: 0;
 }
-.rank-table tr.band td {
-  background: var(--surface-2);
+.rb-rank {
+  color: var(--faint);
+  font-size: 11px;
 }
-.rank-table tr.band td.sorted {
-  background: var(--mid-bg);
-}
-.rank-table td.rank-cell {
-  vertical-align: middle;
-  text-align: center;
-  width: 64px;
-  font-family: var(--display);
-  font-size: 18px;
-  border-right: 1px solid var(--line);
-}
-.rank-table td.rank-cell small {
-  display: block;
-  font-family: var(--body);
-  font-size: 10.5px;
-  color: var(--muted);
+.rb-team {
   font-weight: 600;
 }
-.rank-table tr.tie:not(.tie-last) td {
-  border-bottom-style: dashed;
+.rb-val {
+  text-align: right;
+  color: var(--muted);
 }
-.rank-table tr.tie td.team-cell {
-  box-shadow: inset 3px 0 0 var(--accent);
+.rank-board td.picked .rb-cell {
+  background: var(--info-bg);
 }
-.pill.tied {
-  outline: 1px dashed currentColor;
-  outline-offset: -1px;
+.rank-board td.picked .rb-team,
+.rank-board td.picked .rb-val {
+  color: var(--info-fg);
 }
 .total-row td {
   border-top: 2px solid var(--line);
@@ -1128,8 +1121,4 @@ td.label small {
   .roles-grid {
     grid-template-columns: 1fr;
   }
-}
-.rank-table tr.hl td,
-.rank-table tr.hl.band td {
-  background: var(--info-bg);
 }
