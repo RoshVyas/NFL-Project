@@ -1,0 +1,388 @@
+<title>Matchup Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#EEF1F4; --surface:#FFFFFF; --surface-2:#F6F8FA; --line:#D9DFE5;
+  --ink:#141C24; --muted:#5A6774; --faint:#8793A0;
+  --accent:#2B5FA8;
+  --hot-bg:#FBE3D6; --hot-fg:#A23B12;
+  --cold-bg:#D9EEEA; --cold-fg:#1D6A5E;
+  --mid-bg:#E9EDF1; --mid-fg:#48545F;
+  --gb:#203731; --gb-2:#FFB612; --atl:#A71930; --atl-2:#1B1B1B;
+  --c1:#2F6DB5; --c2:#3FA7A0; --c3:#E0A33A; --c4:#D0643B; --c6:#8C6BC4; --cx:#A3ADB7;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0F151B; --surface:#17202A; --surface-2:#1C2631; --line:#2B3744;
+    --ink:#E6ECF2; --muted:#9AA8B6; --faint:#6D7B89;
+    --accent:#7FA9E6;
+    --hot-bg:#4A2616; --hot-fg:#FFB38F;
+    --cold-bg:#15383A; --cold-fg:#8FDCCB;
+    --mid-bg:#232E3A; --mid-fg:#B4C0CC;
+    --cx:#5F6B77;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F151B; --surface:#17202A; --surface-2:#1C2631; --line:#2B3744;
+  --ink:#E6ECF2; --muted:#9AA8B6; --faint:#6D7B89;
+  --accent:#7FA9E6;
+  --hot-bg:#4A2616; --hot-fg:#FFB38F;
+  --cold-bg:#15383A; --cold-fg:#8FDCCB;
+  --mid-bg:#232E3A; --mid-fg:#B4C0CC;
+  --cx:#5F6B77;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45;padding-inline:16px;padding-block:0 48px}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:.01em}
+.num{font-variant-numeric:tabular-nums}
+
+/* top bar */
+.topbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding-block:16px 4px}
+.brand{font-family:var(--display);font-weight:700;font-size:22px;text-transform:uppercase;letter-spacing:.06em}
+.brand span{color:var(--accent)}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.controls label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+.seg button{font:inherit;font-size:13px;border:0;background:transparent;color:var(--muted);padding:7px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:600}
+button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.sample{font-size:12px;color:var(--hot-fg);background:var(--hot-bg);border-radius:4px;padding:6px 10px;align-self:flex-start}
+
+/* matchup header */
+.matchup{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px 24px}
+.team{display:flex;align-items:center;gap:14px}
+.team.right{justify-content:flex-end;text-align:right}
+.logo{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:20px;flex:none}
+.logo.gb{background:var(--gb);color:var(--gb-2);box-shadow:inset 0 0 0 3px var(--gb-2)}
+.logo.atl{background:var(--atl-2);color:#fff;box-shadow:inset 0 0 0 3px var(--atl)}
+.team h2{font-size:30px;font-weight:700;text-transform:uppercase;line-height:1}
+.team .rec{color:var(--muted);font-size:13px}
+.vs{text-align:center;display:flex;flex-direction:column;gap:2px}
+.vs b{font-family:var(--display);font-size:18px;color:var(--faint)}
+.vs small{color:var(--muted);font-size:12px}
+
+/* edges */
+.section-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px}
+.section-head h2{font-size:22px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.section-head p{margin:0;color:var(--muted);font-size:13px}
+.edges{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.edge{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.edge .who{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot.gb{background:var(--gb-2);box-shadow:0 0 0 2px var(--gb)}
+.dot.atl{background:var(--atl)}
+.edge h3{font-size:19px;font-weight:600;line-height:1.15}
+.edge p{margin:0;color:var(--muted);font-size:13px}
+.edge .big{font-family:var(--display);font-size:26px;font-weight:700;color:var(--hot-fg)}
+
+/* tabs */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--line)}
+.tabs button{font-family:var(--display);font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;border:0;background:none;color:var(--muted);padding:8px 12px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+
+/* panels */
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.panel-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.panel-top .t{display:flex;align-items:center;gap:10px}
+.panel-top h3{font-size:20px;font-weight:700;text-transform:uppercase}
+.panel-top small{color:var(--muted);font-size:12px}
+.stripe{width:6px;height:28px;border-radius:2px}
+.stripe.gb{background:linear-gradient(var(--gb) 50%,var(--gb-2) 50%)}
+.stripe.atl{background:linear-gradient(var(--atl) 50%,var(--atl-2) 50%)}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;background:var(--surface-2)}
+th.s,td.s{text-align:right}
+td.m{white-space:normal;min-width:130px}
+td.m small{display:block;color:var(--faint);font-size:11.5px}
+.val{font-weight:600}
+.pill{display:inline-block;min-width:34px;text-align:center;font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 7px;margin-left:8px}
+.pill.hot{background:var(--hot-bg);color:var(--hot-fg)}
+.pill.cold{background:var(--cold-bg);color:var(--cold-fg)}
+.pill.mid{background:var(--mid-bg);color:var(--mid-fg)}
+.trend{font-size:12px;font-weight:600}
+.trend.softer{color:var(--hot-fg)}
+.trend.tighter{color:var(--cold-fg)}
+.trend.flat{color:var(--faint)}
+
+/* season visibility */
+.only-25 [data-s="26"], .only-25 [data-s="d"]{display:none}
+.only-26 [data-s="25"], .only-26 [data-s="d"]{display:none}
+
+/* coverage bars */
+.cov{padding:14px 16px;display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line)}
+.cov-row{display:grid;grid-template-columns:78px 1fr;gap:10px;align-items:center}
+.cov-row .lbl{font-size:12px;color:var(--muted);font-weight:600}
+.bar{display:flex;height:22px;border-radius:4px;overflow:hidden}
+.bar span{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;min-width:0;overflow:hidden}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11.5px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+/* run direction */
+.gaps{padding:14px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.gaps h4{margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.gap-row{display:grid;grid-template-columns:78px repeat(5,1fr);gap:4px;align-items:center}
+.gap-row .lbl{font-size:12px;color:var(--muted);font-weight:600}
+.gap-row .h{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);text-align:center}
+.cell{text-align:center;border-radius:4px;padding:6px 0;font-weight:600;font-size:13px}
+
+.key{display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:12px;color:var(--muted)}
+.notes{background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:14px 16px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+.notes b{color:var(--ink)}
+.notes p{margin:0;max-width:95ch}
+
+@media (max-width:900px){
+  .edges{grid-template-columns:1fr 1fr}
+  .panels{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .edges{grid-template-columns:1fr}
+  .matchup{grid-template-columns:1fr;text-align:center}
+  .team,.team.right{justify-content:center;text-align:left}
+  .team.right{flex-direction:row-reverse}
+}
+</style>
+
+<div class="wrap" id="app">
+  <header class="topbar">
+    <div class="brand">Matchup<span>Board</span></div>
+    <div class="controls">
+      <label for="game">Game</label>
+      <select id="game">
+        <option>GB @ ATL · Thu Sep 24</option>
+        <option disabled>More games load from the schedule</option>
+      </select>
+      <label>Seasons</label>
+      <div class="seg" role="group" aria-label="Seasons shown">
+        <button type="button" data-view="both" aria-pressed="true">2025 vs 2026</button>
+        <button type="button" data-view="25" aria-pressed="false">2025 only</button>
+        <button type="button" data-view="26" aria-pressed="false">2026 only</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="sample">Mockup: every number on this page is a placeholder to show layout, not real data.</div>
+
+  <section class="matchup" aria-label="Matchup">
+    <div class="team">
+      <div class="logo gb">GB</div>
+      <div><h2>Packers</h2><div class="rec">2025: 11-6 · 2026: 1-1</div></div>
+    </div>
+    <div class="vs"><b>@</b><small>Week 3 · TNF</small><small>Mercedes-Benz Stadium</small></div>
+    <div class="team right">
+      <div><h2>Falcons</h2><div class="rec">2025: 8-9 · 2026: 1-1</div></div>
+      <div class="logo atl">ATL</div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:10px">
+    <div class="section-head">
+      <h2>Biggest edges</h2>
+      <p>Auto-picked: where a defense ranks 25th or worse and the other offense has the player type to exploit it.</p>
+    </div>
+    <div class="edges" id="edges"></div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="section-head">
+      <p id="tabdesc"></p>
+      <div class="key">
+        <span><span class="pill hot">28</span> Gives up a lot (rank 25-32)</span>
+        <span><span class="pill mid">16</span> Average</span>
+        <span><span class="pill cold">4</span> Tough (rank 1-8)</span>
+      </div>
+    </div>
+    <div class="panels" id="panels"></div>
+  </section>
+
+  <div class="notes">
+    <b>How to read this</b>
+    <p>Each side shows one team's <b>defense</b>, so the Packers panel is what the Falcons offense will face and the other way round. Ranks run 1-32 where 32 gives up the most. 2025 is the full regular season; 2026 is games played so far. The two are never blended.</p>
+    <p><b>Planned data:</b> nflverse play-by-play for yards, air yards and run direction; FTN charting (also via nflverse) for man/zone, blitz and coverage shell. Slot, X and Z alignment needs a charting feed with receiver alignment, which is a decision still to make.</p>
+  </div>
+</div>
+
+<script>
+const TEAMS = {
+  GB: {name:"Packers", cls:"gb", opp:"Falcons"},
+  ATL:{name:"Falcons", cls:"atl", opp:"Packers"}
+};
+
+// [2025 value, 2025 rank, 2026 value, 2026 rank]  rank 32 = gives up the most
+const DATA = {
+  scheme: {
+    title:"How they defend",
+    desc:"Coverage and pressure habits. Rates are share of opponent dropbacks.",
+    unit:"%",
+    rows:[
+      ["Man coverage","Cover 0 and Cover 1", {GB:[31,null,27,null], ATL:[22,null,25,null]}],
+      ["Zone coverage","Cover 2, 3, 4, 6", {GB:[66,null,70,null], ATL:[75,null,72,null]}],
+      ["Blitz rate","5+ rushers", {GB:[24,null,29,null], ATL:[31,null,35,null]}],
+      ["Pressure rate","Hurries, hits and sacks", {GB:[36,null,38,null], ATL:[33,null,35,null]}],
+      ["Passer rating vs man","", {GB:[88.4,14,97.1,21], ATL:[104.9,27,109.3,29]}],
+      ["Passer rating vs zone","", {GB:[93.0,17,101.6,24], ATL:[90.2,13,86.8,9]}]
+    ],
+    shells:{
+      GB: {"25":[28,16,30,14,8,4],"26":[24,18,27,19,9,3]},
+      ATL:{"25":[20,12,38,16,10,4],"26":[23,10,34,20,9,4]}
+    }
+  },
+  position: {
+    title:"Allowed by position",
+    desc:"Yards given up per game to each position group.",
+    rows:[
+      ["QB passing","Pass yards", {GB:[221.0,14,248.0,22], ATL:[236.0,21,229.0,18]}],
+      ["QB rushing","Designed runs and scrambles", {GB:[18.4,19,27.5,28], ATL:[15.1,11,12.0,7]}],
+      ["RB rushing","", {GB:[101.2,12,94.0,9], ATL:[128.4,29,139.5,31]}],
+      ["RB receiving","", {GB:[38.1,21,44.5,26], ATL:[33.0,13,29.5,9]}],
+      ["WR receiving","All wide receivers", {GB:[142.6,17,161.0,24], ATL:[158.9,27,148.0,21]}],
+      ["TE receiving","", {GB:[44.8,20,58.5,29], ATL:[39.2,12,36.0,10]}]
+    ]
+  },
+  roles: {
+    title:"Receiver roles",
+    desc:"Receiving yards per game by where the target lines up and how far downfield.",
+    rows:[
+      ["Slot WR","Inside receiver", {GB:[61.3,23,72.0,28], ATL:[47.0,10,44.5,9]}],
+      ["X receiver","Outside, on the line", {GB:[48.2,12,51.5,15], ATL:[64.8,29,61.0,27]}],
+      ["Z receiver","Outside, off the line", {GB:[39.9,16,41.0,17], ATL:[51.2,25,49.0,22]}],
+      ["Tight end","Inline and flexed", {GB:[44.8,20,58.5,29], ATL:[39.2,12,36.0,10]}],
+      ["Deep targets","20+ air yards", {GB:[44.0,15,38.5,11], ATL:[58.6,30,63.5,31]}],
+      ["Intermediate","10-19 air yards", {GB:[61.7,19,66.0,22], ATL:[55.4,14,50.5,11]}],
+      ["Short and screens","Under 10 air yards", {GB:[71.4,16,79.0,23], ATL:[68.1,12,64.0,10]}],
+      ["Yards after catch","", {GB:[118.0,18,131.0,24], ATL:[109.0,11,104.0,9]}]
+    ]
+  },
+  run: {
+    title:"Run defense",
+    desc:"How the run game has gone against them, including where runs are hitting.",
+    rows:[
+      ["Rush yards / game","All players", {GB:[119.6,15,121.5,17], ATL:[143.5,30,151.5,31]}],
+      ["Yards per carry","", {GB:[4.2,13,4.0,10], ATL:[4.8,29,5.1,30]}],
+      ["10+ yard runs / game","", {GB:[1.9,14,1.5,9], ATL:[2.8,30,3.0,31]}],
+      ["QB rush yards / game","", {GB:[18.4,19,27.5,28], ATL:[15.1,11,12.0,7]}],
+      ["Rush TDs / game","", {GB:[0.8,16,1.0,20], ATL:[1.1,26,1.5,29]}]
+    ],
+    gaps:{
+      GB: {"25":[4.9,3.8,3.6,4.1,5.4],"26":[5.2,3.5,3.3,3.9,5.8]},
+      ATL:{"25":[5.6,4.4,4.1,5.0,4.7],"26":[6.1,4.6,4.3,5.5,4.9]}
+    }
+  }
+};
+
+const EDGES = [
+  {team:"GB", title:"Deep shots on the Falcons", big:"31st", note:"ATL gives up 63.5 yds/game on throws of 20+ air yards in 2026 (30th in 2025)."},
+  {team:"GB", title:"Run it at the left edge", big:"6.1 YPC", note:"ATL allows 5.1 per carry overall, 6.1 on runs outside the left end."},
+  {team:"ATL", title:"Falcons slot receiver", big:"28th", note:"GB gives up 72.0 slot yds/game this season, up from 61.3 in 2025."},
+  {team:"ATL", title:"Tight end over the middle", big:"29th", note:"GB allows 58.5 TE yds/game so far, up from 44.8 last season."}
+];
+
+const SHELLS = [["Cover 0/1","--c1"],["Cover 2","--c2"],["Cover 3","--c3"],["Cover 4","--c4"],["Cover 6","--c6"],["Other","--cx"]];
+const GAPS = ["Left end","Left tackle","Middle","Right tackle","Right end"];
+
+const tier = r => r==null ? "" : r>=25 ? "hot" : r<=8 ? "cold" : "mid";
+const fmt = (v,unit) => (Number.isInteger(v) ? v : v.toFixed(1)) + (unit||"");
+
+function trend(r25,r26,v25,v26,unit){
+  if(r25==null){
+    const d = v26 - v25;
+    if(Math.abs(d)<2) return '<span class="trend flat">Steady</span>';
+    return `<span class="trend flat">${d>0?"+":""}${fmt(+d.toFixed(1))}${unit||""}</span>`;
+  }
+  const d = r26 - r25;
+  if(d>=3) return '<span class="trend softer">Softer</span>';
+  if(d<=-3) return '<span class="trend tighter">Tighter</span>';
+  return '<span class="trend flat">Steady</span>';
+}
+
+function cell(v,r,unit){
+  return `<span class="val">${fmt(v,unit)}</span>${r!=null?`<span class="pill ${tier(r)}">${r}</span>`:""}`;
+}
+
+function table(sec,key){
+  const unit = sec.unit;
+  const body = sec.rows.map(([m,sub,d])=>{
+    const [v25,r25,v26,r26] = d[key];
+    return `<tr><td class="m">${m}${sub?`<small>${sub}</small>`:""}</td>
+      <td class="s" data-s="25">${cell(v25,r25,unit)}</td>
+      <td class="s" data-s="26">${cell(v26,r26,unit)}</td>
+      <td class="s" data-s="d">${trend(r25,r26,v25,v26,unit)}</td></tr>`;
+  }).join("");
+  return `<div class="scroll"><table>
+    <thead><tr><th>Stat</th><th class="s" data-s="25">2025 season</th><th class="s" data-s="26">2026 so far</th><th class="s" data-s="d">Change</th></tr></thead>
+    <tbody>${body}</tbody></table></div>`;
+}
+
+function shellBars(sec,key){
+  const row = (yr,lab) => {
+    const vals = sec.shells[key][yr];
+    return `<div class="cov-row" data-s="${yr}"><span class="lbl">${lab}</span><div class="bar">${
+      vals.map((v,i)=>`<span style="width:${v}%;background:var(${SHELLS[i][1]})" title="${SHELLS[i][0]}: ${v}%">${v>=9?v+"%":""}</span>`).join("")
+    }</div></div>`;
+  };
+  return `<div class="cov">${row("25","2025")}${row("26","2026 so far")}
+    <div class="legend">${SHELLS.map(([n,c])=>`<span><i style="background:var(${c})"></i>${n}</span>`).join("")}</div></div>`;
+}
+
+function gapGrid(sec,key){
+  const shade = v => v>=5.0 ? "hot" : v<=3.9 ? "cold" : "mid";
+  const row = (yr,lab) => `<div class="gap-row" data-s="${yr}"><span class="lbl">${lab}</span>${
+    sec.gaps[key][yr].map(v=>`<div class="cell pill ${shade(v)}" style="margin:0">${v.toFixed(1)}</div>`).join("")}</div>`;
+  return `<div class="gaps"><h4>Yards per carry by run direction</h4>
+    <div class="gap-row"><span></span>${GAPS.map(g=>`<span class="h">${g}</span>`).join("")}</div>
+    ${row("25","2025")}${row("26","2026 so far")}</div>`;
+}
+
+function panel(tabKey,key){
+  const sec = DATA[tabKey], t = TEAMS[key];
+  let extra = "";
+  if(tabKey==="scheme") extra = shellBars(sec,key);
+  if(tabKey==="run") extra = gapGrid(sec,key);
+  return `<article class="panel">
+    <div class="panel-top"><div class="t"><span class="stripe ${t.cls}"></span><h3>${t.name} defense</h3></div>
+      <small>What the ${t.opp} offense faces</small></div>
+    ${table(sec,key)}${extra}</article>`;
+}
+
+let current = "position";
+function render(){
+  document.getElementById("tabs").innerHTML = Object.entries(DATA).map(([k,s])=>
+    `<button type="button" role="tab" aria-selected="${k===current}" data-tab="${k}">${s.title}</button>`).join("");
+  document.getElementById("tabdesc").textContent = DATA[current].desc;
+  document.getElementById("panels").innerHTML = panel(current,"GB") + panel(current,"ATL");
+}
+
+document.getElementById("edges").innerHTML = EDGES.map(e=>{
+  const t = TEAMS[e.team];
+  return `<div class="edge"><span class="who"><span class="dot ${t.cls}"></span>${t.name} offense</span>
+    <h3>${e.title}</h3><span class="big">${e.big}</span><p>${e.note}</p></div>`;
+}).join("");
+
+document.getElementById("tabs").addEventListener("click",e=>{
+  const b = e.target.closest("[data-tab]"); if(!b) return;
+  current = b.dataset.tab; render();
+});
+
+const app = document.getElementById("app");
+document.querySelector(".seg").addEventListener("click",e=>{
+  const b = e.target.closest("[data-view]"); if(!b) return;
+  document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed", x===b));
+  app.classList.remove("only-25","only-26");
+  if(b.dataset.view!=="both") app.classList.add("only-"+b.dataset.view);
+});
+
+render();
+</script>
