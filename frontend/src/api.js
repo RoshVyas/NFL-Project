@@ -26,6 +26,8 @@ export const api = {
       body: JSON.stringify({ season, ...roles }),
     }),
   resetRoles: (team, season) => request(`/api/roles/${team}?season=${season}`, { method: "DELETE" }),
+  bets: (gameId, refresh = false) =>
+    request(`/api/bets/${encodeURIComponent(gameId)}${refresh ? "?refresh=true" : ""}`),
   rankings: (season, side) => request(`/api/rankings?season=${season}&side=${side}`),
   refresh: () => request("/api/refresh", { method: "POST" }),
 };

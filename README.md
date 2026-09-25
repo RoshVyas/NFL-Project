@@ -64,6 +64,45 @@ threat tags. This is also where you edit receiver roles (see below).
 Every stat shows its **rank out of 32**. 1 is always best *for that unit*, so on a defense 32 means it gives up the
 most. Green means top 8, red means bottom 8, and blue-grey means a tendency that isn't good or bad (like pass rate).
 
+## Bet finder
+
+The **Bet finder** tab builds picks for the selected game from every stat in the dashboard:
+
+- **5 singles**, ranked by value x confidence
+- a **value bet builder** (high-probability legs priced above fair)
+- a **longshot bet builder** (value legs adding up to 11/1 or more)
+- the **top 3 anytime TD scorers** and the **top 3 first TD scorers**
+
+Each pick shows the model's chance, the fair price for that chance, the Paddy Power price, a box for the bet365
+price, and the value (chance x best price - 1). Odds can be shown as fractions (5/6) or decimals (1.83).
+
+### Live odds (The Odds API)
+
+1. Get a free key at [the-odds-api.com](https://the-odds-api.com) (500 credits a month).
+2. Copy `backend/.env.example` to `backend/.env` and paste the key after `ODDS_API_KEY=`.
+   On Render, add `ODDS_API_KEY` under **Environment** instead.
+3. Restart the app. The Bet finder then pulls Paddy Power, other UK bookmakers, and DraftKings/FanDuel (for
+   player-prop lines). Odds are cached for 20 minutes; **Refresh odds** fetches new ones. One game costs about
+   10 credits per fetch.
+
+bet365 isn't available through The Odds API, so type bet365's prices into the bet365 boxes. They're remembered in
+your browser. Without a key, spread, total and money line use the US consensus from the schedule, and player props
+use estimated lines priced from each player's own average (marked "Estimated line").
+
+### How picks are worked out
+
+1. **Score:** each team's scoring rate x what the opponent allows (vs league average), plus home field. This
+   season's weight grows with games played.
+2. **Players:** yards, catches and TDs from their own averages, adjusted by what the opponent allows to their spot.
+   TD chances use their share of team TDs and red-zone chances. Out/Doubtful players (nflverse injury reports) are
+   removed.
+3. **Probabilities:** bell curve for yards, Poisson for counts and TDs, blended with the bookmakers' no-vig view.
+4. **Ranking:** value x confidence, where confidence reflects sample size, how strongly the Mismatches board
+   agrees, and whether the price is real or estimated.
+
+It's a statistical model, not a guarantee. Bet only what you can afford to lose
+([BeGambleAware](https://www.begambleaware.org)).
+
 ## Where the data comes from
 
 | What | Source | Updated |
