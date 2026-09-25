@@ -155,16 +155,6 @@ def depth_charts(season: int) -> pd.DataFrame | None:
     return df[df["dt"] == df.groupby("team")["dt"].transform("max")].reset_index(drop=True)
 
 
-def injuries(season: int) -> pd.DataFrame | None:
-    """Weekly injury reports (Out / Doubtful / Questionable)."""
-    ttl = config.TTL_DEPTH_HOURS if season >= config.current_season() else config.TTL_PRIOR_HOURS
-    path = _release("injuries", f"injuries_{season}.parquet", ttl)
-    if path is None:
-        return None
-    return _read(path, ["season", "team", "week", "gsis_id", "full_name", "position", "report_status",
-                        "practice_status", "report_primary_injury"])
-
-
 def players() -> pd.DataFrame:
     path = _release("players", "players.parquet", config.TTL_PRIOR_HOURS)
     if path is None:
@@ -191,7 +181,6 @@ def force_refresh() -> None:
         f"ftn_charting_{cur}.parquet",
         f"pbp_participation_{cur}.parquet",
         f"depth_charts_{cur}.parquet",
-        f"injuries_{cur}.parquet",
         "games.csv",
     ]:
         p = config.CACHE_DIR / name

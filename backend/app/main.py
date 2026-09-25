@@ -13,7 +13,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import config, finder, report, sources, teams
+from . import config, report, sources, teams
 from . import roles as roles_mod
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -65,18 +65,6 @@ def matchup_by_teams(away: str, home: str):
         raise HTTPException(400, "Pick two different teams")
     try:
         return report.matchup(away, home, None)
-    except sources.DataUnavailable as exc:
-        raise HTTPException(503, str(exc))
-
-
-@app.get("/api/bets/{game_id}")
-def bets(game_id: str, refresh: bool = False):
-    """Bet finder picks for one game. refresh=true re-fetches odds (uses Odds API credits)."""
-    game = report.find_game(game_id)
-    if not game:
-        raise HTTPException(404, f"No game with id {game_id}")
-    try:
-        return finder.build(game, force_odds=refresh)
     except sources.DataUnavailable as exc:
         raise HTTPException(503, str(exc))
 

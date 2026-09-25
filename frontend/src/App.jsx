@@ -5,7 +5,6 @@ import MatchupHeader from "./components/MatchupHeader.jsx";
 import EdgeBoard from "./components/EdgeBoard.jsx";
 import TeamHalf from "./components/TeamHalf.jsx";
 import Rankings from "./components/Rankings.jsx";
-import BetFinder from "./components/BetFinder.jsx";
 
 const VIEW_KEY = "matchup-board:view";
 
@@ -106,9 +105,6 @@ export default function App() {
         <button aria-current={page === "matchup" ? "page" : undefined} onClick={() => setPage("matchup")}>
           Matchup
         </button>
-        <button aria-current={page === "bets" ? "page" : undefined} onClick={() => setPage("bets")}>
-          Bet finder
-        </button>
         <button aria-current={page === "rankings" ? "page" : undefined} onClick={() => setPage("rankings")}>
           League rankings
         </button>
@@ -139,13 +135,6 @@ export default function App() {
           <div className="spinner" aria-hidden="true" />
           <p>Loading play-by-play data. The first run downloads about 100 MB of NFL data, so it can take a minute.</p>
         </div>
-      )}
-
-      {page === "bets" && data && (
-        <main>
-          <MatchupHeader data={data} />
-          <BetFinder gameId={selection?.type === "game" ? selection.id : null} />
-        </main>
       )}
 
       {page === "rankings" && data && (
